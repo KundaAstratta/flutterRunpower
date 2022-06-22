@@ -69,27 +69,46 @@ class _MyHomePageState extends State<MyHomePage> {
 
   static  CameraPosition _kInitialPosition = CameraPosition(target: _kMapCenter, zoom: 11.0, tilt: 0, bearing: 0);
 
-  List<LatLongElt> latLongList = [];
-  int numberOfEltInLatLongList = 0;
-
-  List<PowerElt> powerEltList = [];
-
-  double deltaDistancePowerActivity = 0;
-  int deltaTimezonePowerActivity = 0;
-
-  DateTime dateTime = DateTime.now();
-  String second = "" ;
 
   double mass = 75;
   double Ar = 0.24;
   double gravity = 9.81;
-  double speedWind =0;
+  double speedWind = 0;
   double temperature = 15;
   double pressureATM = 101325;
   double pressureSaturation = 0;
   double percentHumidity = 50;
   double massVolumic = 0;
   double rateElevation = 0;
+
+  double easyPaceMin = 0;
+  double easyPaceMax = 0;
+  double moderatePaceMin = 0;
+  double moderatePaceMax = 0;
+  double thresholdPaceMin = 0;
+  double thresholdPaceMax = 0;
+  double intervalPaceMin = 0;
+  double intervalPaceMax = 0;
+  double repetitionPaceMin = 0;
+  double repetitionPaceMax = 0;
+  int numberOfEasy = 0;
+  int numberOfModerate = 0;
+  int numberOfThreshold = 0;
+  int numberOfInterval = 0;
+  int numberOfRepetition = 0;
+
+
+  List<LatLongElt> latLongList = [];
+  int numberOfEltInLatLongList = 0;
+
+  List<PowerElt> powerEltList = [];
+  PowerElt powerElt = PowerElt(identElt: 1, distElt: 1, timeElt: 1, powerElt: 1, speedElt: 1, paceElt: 1, meanPowerElt: 1, medianPowerElt: 1, medianSpeedElt: 1, percentMaxElt: 1, vo2ValueElt: 1, vdotValueElt: 1);
+
+  double deltaDistancePowerActivity = 0;
+  int deltaTimezonePowerActivity = 0;
+
+  DateTime dateTime = DateTime.now();
+  //String second = "" ;
 
   double timeFromStart = 0;
   String timeFromStartString = "";
@@ -303,7 +322,7 @@ class _MyHomePageState extends State<MyHomePage> {
           powerEltList.add(PowerElt(
               identElt: identEltRecorded,
               distElt: distanceFromStart,
-              kmElt: timeFromStart,
+              timeElt: timeFromStart,
               powerElt: power,
               speedElt: speed,
               paceElt: pace,
@@ -311,7 +330,7 @@ class _MyHomePageState extends State<MyHomePage> {
               medianPowerElt: medianPower,
               medianSpeedElt: medianSpeed,
               percentMaxElt: percentMax,
-              vo2ValueELt: vo2Value,
+              vo2ValueElt: vo2Value,
               vdotValueElt: vdotValue
           ));
         }
@@ -385,22 +404,153 @@ class _MyHomePageState extends State<MyHomePage> {
               },
             ),
             SpeedDialChild(
-              child: const Icon(Icons.directions_walk),
+              child: const Icon(Icons.delete),
               foregroundColor: Colors.black,
               backgroundColor: Colors.yellow,
               label: 'Dismiss',
               onPressed: () {
+
+                IsRunRecorded = false;
+                stateOfRun = "Go";
+                stateOfRunString = "Pause...";
+
+                //Tout mettre à zero....
+                latLongList.clear();
+                numberOfEltInLatLongList = 0;
+
+                powerEltList.clear();
+
+                deltaDistancePowerActivity = 0;
+                deltaTimezonePowerActivity = 0;
+
+                dateTime = DateTime.now();
+             //   second = "" ;
+
+
+                timeFromStart = 0;
+                timeFromStartString = "";
+                distanceFromStart = 0;
+                distanceFromStartString = "";
+
+                power = 0;
+                powerString ="";
+                sumOfPower = 0;
+                numberOfPower = 0;
+                meanPower = 0;
+                mList.clear();
+                sList.clear();
+                medianPower = 0;
+                speed = 0;
+                medianSpeed = 0;
+                pace = 0;
+                percentMax = 0;
+                vo2Value = 0;
+                vdotValue = 0;
+
+                identEltRecorded = 0;
+
+                _text = '';
+
+
                 setState(() {
                   _text = 'Dismiss...';
                 });
               },
             ),
             SpeedDialChild(
-              child: const Icon(Icons.directions_bike),
+              child: const Icon(Icons.save),
               foregroundColor: Colors.white,
               backgroundColor: Colors.green,
               label: 'Save',
               onPressed: () {
+
+                IsRunRecorded = false;
+                stateOfRun = "Go";
+                stateOfRunString = "Pause...";
+
+                print(powerEltList.length);
+
+                print(powerEltList[powerEltList.length - 1].vdotValueElt);
+                print(powerEltList[powerEltList.length - 1].medianPowerElt);
+                print(powerEltList[powerEltList.length - 1].meanPowerElt);
+
+                easyPaceMin = target(1000,0.59,powerEltList[powerEltList.length - 1].vdotValueElt) ;
+                easyPaceMax = target(1000,0.74,powerEltList[powerEltList.length - 1].vdotValueElt) ;
+                moderatePaceMin = target(1000,0.75,powerEltList[powerEltList.length - 1].vdotValueElt);
+                moderatePaceMax = target(1000,0.83,powerEltList[powerEltList.length - 1].vdotValueElt);
+                thresholdPaceMin = target(1000,0.84,powerEltList[powerEltList.length - 1].vdotValueElt);
+                thresholdPaceMax = target(1000,0.88,powerEltList[powerEltList.length - 1].vdotValueElt);
+                intervalPaceMin = target(1000,0.95, powerEltList[powerEltList.length - 1].vdotValueElt);
+                intervalPaceMax = target(1000,1.0, powerEltList[powerEltList.length - 1].vdotValueElt);
+                repetitionPaceMin = target(1000, 1.05, powerEltList[powerEltList.length - 1].vdotValueElt);
+                repetitionPaceMax = target(1000, 1.20, powerEltList[powerEltList.length - 1].vdotValueElt);
+
+
+
+                numberOfEasy = 0;
+                numberOfModerate = 0;
+                numberOfThreshold = 0;
+                numberOfInterval = 0;
+                numberOfRepetition = 0;
+
+                for (powerElt in powerEltList) {
+
+                  print(powerElt.paceElt);
+                  if (powerElt.paceElt >= easyPaceMax) {
+                    numberOfEasy = numberOfEasy + 1;
+                  } else {
+                    if ((moderatePaceMax <= powerElt.paceElt)) { //&& (powerElt.paceElt <= moderatePaceMax)) {
+                      numberOfModerate = numberOfModerate + 1;
+                    } else {
+                      if ((thresholdPaceMax <= powerElt.paceElt)) {// && (powerElt.paceElt <= thresholdPaceMin)) {
+                        numberOfThreshold = numberOfThreshold + 1;
+                      } else {
+                        if ((intervalPaceMax <= powerElt.paceElt)) {//&& (powerElt.paceElt <= intervalPaceMax)) {
+                          numberOfInterval = numberOfInterval + 1;
+                        } else {
+                   //       if ((repetitionPaceMax <= powerElt.paceElt)) {//&& (powerElt.paceElt <= repetitionPaceMax)) {
+                            numberOfRepetition = numberOfRepetition + 1;
+                      //    }
+                        }
+                      }
+                    }
+                  }
+
+                }
+
+                print("intervals");
+                print(easyPaceMin);
+                print(easyPaceMax);
+                print(moderatePaceMin);
+                print(moderatePaceMax);
+                print(thresholdPaceMin);
+                print(thresholdPaceMax);
+                print(intervalPaceMin);
+                print(intervalPaceMax);
+                print(repetitionPaceMin);
+                print(repetitionPaceMax);
+                print("numbers");
+                print(numberOfEasy);
+                print(numberOfModerate);
+                print(numberOfThreshold);
+                print(numberOfInterval);
+                print(numberOfRepetition);
+
+                RunElt(identRunElt: DateTime.now().hashCode,
+                                dateTimeRunELt: DateTime.now(),
+                                PowerRunElt: powerEltList,
+                                medianPowerRunElt: powerEltList[powerEltList.length - 1].medianPowerElt,
+                                meanPowerRunElt: powerEltList[powerEltList.length - 1].meanPowerElt,
+                                medianSpeedRunElt: powerEltList[powerEltList.length - 1].medianSpeedElt,
+                                percentMaxRunElt: powerEltList[powerEltList.length - 1].percentMaxElt,
+                                vo2ValueRunElt: powerEltList[powerEltList.length - 1].vo2ValueElt,
+                                vdotValueRunElt: powerEltList[powerEltList.length - 1].vdotValueElt,
+                                numberOfEasyRunElt: numberOfEasy,
+                                numberOfModerateRunElt: numberOfModerate,
+                                numberOfThresholdRunElt: numberOfThreshold,
+                                numberOfIntervalRunElt: numberOfInterval,
+                                numberOfRepetitionRunElt: numberOfRepetition);
+
                 setState(() {
                   _text = 'Save ! ';
                 });
@@ -667,11 +817,37 @@ class LatLongElt{ //modal class for Latitude Longitude Element object
 
 class PowerElt {
   int identElt;
-  double distElt, kmElt, powerElt, speedElt, paceElt, meanPowerElt, medianPowerElt, medianSpeedElt;
-  double percentMaxElt, vo2ValueELt, vdotValueElt;
-  PowerElt({required this.identElt, required this.distElt, required this.kmElt,
+  double distElt, timeElt, powerElt, speedElt, paceElt, meanPowerElt, medianPowerElt, medianSpeedElt;
+  double percentMaxElt, vo2ValueElt, vdotValueElt;
+  PowerElt({required this.identElt, required this.distElt, required this.timeElt,
             required this.powerElt, required this.speedElt, required this.paceElt,
             required this.meanPowerElt, required this.medianPowerElt, required this.medianSpeedElt,
-            required this.percentMaxElt, required this.vo2ValueELt, required this.vdotValueElt });
+            required this.percentMaxElt, required this.vo2ValueElt, required this.vdotValueElt });
 
+}
+
+class RunElt {
+  int identRunElt;
+  DateTime dateTimeRunELt;
+  List<PowerElt> PowerRunElt;
+  double medianPowerRunElt, meanPowerRunElt;
+  double medianSpeedRunElt;
+  double percentMaxRunElt, vo2ValueRunElt, vdotValueRunElt;
+  int numberOfEasyRunElt;
+  int numberOfModerateRunElt;
+  int numberOfThresholdRunElt;
+  int numberOfIntervalRunElt;
+  int numberOfRepetitionRunElt;
+  RunElt({required this.identRunElt,
+          required this.dateTimeRunELt,
+          required this.PowerRunElt,
+          required this.medianPowerRunElt, required this.meanPowerRunElt,
+          required this.medianSpeedRunElt,
+          required this.percentMaxRunElt, required this.vo2ValueRunElt, required this.vdotValueRunElt,
+          required this.numberOfEasyRunElt,
+          required this.numberOfModerateRunElt,
+          required this.numberOfThresholdRunElt,
+          required this.numberOfIntervalRunElt,
+          required this.numberOfRepetitionRunElt
+  });
 }
