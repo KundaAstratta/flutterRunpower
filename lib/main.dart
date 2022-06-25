@@ -4,6 +4,9 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'dart:math';
 import 'package:simple_speed_dial/simple_speed_dial.dart';
+import 'package:code/RunEltModel.dart';
+import 'package:code/PowerEltModel.dart';
+import 'RunPowerView.dart';
 
 
 void main() {
@@ -102,7 +105,8 @@ class _MyHomePageState extends State<MyHomePage> {
   int numberOfEltInLatLongList = 0;
 
   List<PowerElt> powerEltList = [];
-  PowerElt powerElt = PowerElt(identElt: 1, distElt: 1, timeElt: 1, powerElt: 1, speedElt: 1, paceElt: 1, meanPowerElt: 1, medianPowerElt: 1, medianSpeedElt: 1, percentMaxElt: 1, vo2ValueElt: 1, vdotValueElt: 1);
+  //PowerElt powerElt = PowerElt(identElt: 1, distElt: 1, timeElt: 1, powerElt: 1, speedElt: 1, paceElt: 1, meanPowerElt: 1, medianPowerElt: 1, medianSpeedElt: 1, percentMaxElt: 1, vo2ValueElt: 1, vdotValueElt: 1);
+  List<RunElt> runEltList = [];
 
   double deltaDistancePowerActivity = 0;
   int deltaTimezonePowerActivity = 0;
@@ -136,6 +140,24 @@ class _MyHomePageState extends State<MyHomePage> {
   int identEltRecorded = 0;
 
   String _text = '';
+
+  //List Widget Begin
+
+  Widget _buildRow(int idx) {
+    return ListTile(
+      title: Text(runEltList[idx].identRunElt.toString(),style:TextStyle(fontSize: 20, color: Colors.white),),
+      leading: SizedBox(
+        width: 50,
+        height: 50,
+    //    child: Image.network(Fruitdata[index].ImageUrl),
+      ),
+      onTap: (){
+        Navigator.of(context).push(MaterialPageRoute(builder: (context)=>RunPowerView(runElt: runEltList[idx],)));
+      },
+    );
+  }
+
+  //List Widget End
 
 
   void _onMapCreated(GoogleMapController controller) {
@@ -355,9 +377,10 @@ class _MyHomePageState extends State<MyHomePage> {
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
     return Scaffold(
+        backgroundColor: Colors.black,
         appBar: AppBar(
-            title: Text("Runpower"),
-            backgroundColor: Colors.redAccent
+        //    title: Text("Runpower"),
+            backgroundColor: Colors.black
         ),
         /*
         floatingActionButton: FloatingActionButton(
@@ -460,7 +483,7 @@ class _MyHomePageState extends State<MyHomePage> {
             SpeedDialChild(
               child: const Icon(Icons.save),
               foregroundColor: Colors.white,
-              backgroundColor: Colors.green,
+              backgroundColor: Colors.lightBlueAccent,
               label: 'Save',
               onPressed: () {
 
@@ -493,7 +516,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 numberOfInterval = 0;
                 numberOfRepetition = 0;
 
-                for (powerElt in powerEltList) {
+                for (PowerElt powerElt in powerEltList) {
 
                   print(powerElt.paceElt);
                   if (powerElt.paceElt >= easyPaceMax) {
@@ -536,7 +559,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 print(numberOfInterval);
                 print(numberOfRepetition);
 
-                RunElt(identRunElt: DateTime.now().hashCode,
+                RunElt runElt =  RunElt(identRunElt: DateTime.now().hashCode,
                                 dateTimeRunELt: DateTime.now(),
                                 PowerRunElt: powerEltList,
                                 medianPowerRunElt: powerEltList[powerEltList.length - 1].medianPowerElt,
@@ -550,6 +573,8 @@ class _MyHomePageState extends State<MyHomePage> {
                                 numberOfThresholdRunElt: numberOfThreshold,
                                 numberOfIntervalRunElt: numberOfInterval,
                                 numberOfRepetitionRunElt: numberOfRepetition);
+
+                runEltList.add(runElt);
 
                 setState(() {
                   _text = 'Save ! ';
@@ -567,70 +592,129 @@ class _MyHomePageState extends State<MyHomePage> {
         Center(
             child: Column(
               children: <Widget>[
-                Text(servicestatus? "GPS status is Enabled": "GPS status is disabled."),
-                Text(haspermission? "GPS permission is Enabled": "GPS permission is disabled."),
-                Text("Longitude: $long", style:TextStyle(fontSize: 20),),
-                Text("Latitude: $lat", style: TextStyle(fontSize: 20),),
-                const Divider(
-                  height: 50,
-                  thickness: 5,
-                ),
-                Row(
-                   mainAxisAlignment: MainAxisAlignment.center, //Center Row contents horizontally
-                   crossAxisAlignment: CrossAxisAlignment.center, //Center Row contents vertically,
-                   children:   <Widget>[
-                       Text("Power :",style:TextStyle(fontSize: 20)),
-                       const VerticalDivider(
-                         width: 50,
-                         thickness: 5,
+                Card(
+                  color: Color.fromRGBO(50, 50, 50, 1),
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(30.0),
+                      topRight: Radius.circular(30.0),
+                      bottomLeft: Radius.circular(30.0),
+                      bottomRight: Radius.circular(30.0),
+                    ),
+                  ),
+               //   child: SizedBox(
+                 //   height: 400.0,
+                    child: Column(
+                      children: <Widget>[
+                        Text(servicestatus? "GPS status is Enabled": "GPS status is disabled.",style:TextStyle(fontSize: 15, color: Colors.white),),
+                        Text(haspermission? "GPS permission is Enabled": "GPS permission is disabled.",style:TextStyle(fontSize: 15, color: Colors.white),),
+                        Text("Longitude: $long", style:TextStyle(fontSize: 20, color: Colors.white),),
+                        Text("Latitude: $lat", style:TextStyle(fontSize: 20, color: Colors.white),),
+                        const Divider(
+                          height: 50,
+                          thickness: 5,
                         ),
-                        Text("$powerString",style:TextStyle(fontSize: 20)),
-                   ],
-                ),
-                const Divider(
-                    height: 50,
-                    thickness: 5,
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center, //Center Row contents horizontally
-                  crossAxisAlignment: CrossAxisAlignment.center, //Center Row contents vertically,
-                  children:   <Widget>[
-                    Text("Time :",style:TextStyle(fontSize: 20)),
-                    const VerticalDivider(
-                      width: 50,
-                      thickness: 5,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center, //Center Row contents horizontally
+                          crossAxisAlignment: CrossAxisAlignment.center, //Center Row contents vertically,
+                          children:   <Widget>[
+                            Text("Power :",style:TextStyle(fontSize: 20, color: Colors.white),),
+                            const VerticalDivider(
+                              width: 50,
+                              thickness: 5,
+                            ),
+                            Text("$powerString",style:TextStyle(fontSize: 20, color: Colors.redAccent,fontWeight: FontWeight.bold,)),
+                          ],
+                        ),
+                        const Divider(
+                          height: 50,
+                          thickness: 5,
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center, //Center Row contents horizontally
+                          crossAxisAlignment: CrossAxisAlignment.center, //Center Row contents vertically,
+                          children:   <Widget>[
+                            Text("Time :",style:TextStyle(fontSize: 20, color: Colors.white),),
+                            const VerticalDivider(
+                              width: 50,
+                              thickness: 5,
+                            ),
+                            Text("$timeFromStartString",style:TextStyle(fontSize: 20, color: Colors.yellowAccent,fontWeight: FontWeight.bold,)),
+                          ],
+                        ),
+                        const Divider(
+                          height: 50,
+                          thickness: 5,
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center, //Center Row contents horizontally
+                          crossAxisAlignment: CrossAxisAlignment.center, //Center Row contents vertically,
+                          children:   <Widget>[
+                            Text("Distance :",style:TextStyle(fontSize: 20, color: Colors.white),),
+                            const VerticalDivider(
+                              width: 50,
+                              thickness: 5,
+                            ),
+                            Text("$distanceFromStartString",style:TextStyle(fontSize: 20, color: Colors.lightBlueAccent,fontWeight: FontWeight.bold,)),
+                            Text(" km",style:TextStyle(fontSize: 20, color: Colors.lightBlueAccent,fontWeight: FontWeight.bold,)),
+                          ],
+                        ),
+                        const Divider(
+                          height: 50,
+                          thickness: 5,
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center, //Center Row contents horizontally
+                          crossAxisAlignment: CrossAxisAlignment.center, //Center Row contents vertically,
+                          children:   <Widget>[
+                            Text("$stateOfRunString",style:TextStyle(fontSize: 20, color: Colors.white),),
+                          ],
+                        ),
+
+                      ],
                     ),
-                    Text("$timeFromStartString",style:TextStyle(fontSize: 20)),
+                  ),
+                Column(
+
+                  children:  <Widget>[
+                    Text("RunPowerList",style:TextStyle(fontSize: 20, color: Colors.white),),
+
                   ],
                 ),
-                const Divider(
-                  height: 50,
-                  thickness: 5,
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center, //Center Row contents horizontally
-                  crossAxisAlignment: CrossAxisAlignment.center, //Center Row contents vertically,
-                  children:   <Widget>[
-                    Text("Distance :",style:TextStyle(fontSize: 20)),
-                    const VerticalDivider(
-                      width: 50,
-                      thickness: 5,
+                Expanded(
+                  child:Card(
+                    color: Color.fromRGBO(50, 50, 50, 1),
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(30.0),
+                        topRight: Radius.circular(30.0),
+                      ),
                     ),
-                    Text("$distanceFromStartString",style:TextStyle(fontSize: 20)),
-                    Text(" km",style:TextStyle(fontSize: 20)),
-                  ],
-                ),
-                const Divider(
-                  height: 50,
-                  thickness: 5,
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center, //Center Row contents horizontally
-                  crossAxisAlignment: CrossAxisAlignment.center, //Center Row contents vertically,
-                  children:   <Widget>[
-                    Text("$stateOfRunString",style:TextStyle(fontSize: 20)),
-                  ],
-                ),
+                          child:
+                          ListView.builder(
+                            itemCount: runEltList.length,
+                            padding: const EdgeInsets.all(16.0),
+                            itemBuilder: (BuildContext context, int index) {
+                        //      if (i.isOdd) return const Divider();
+                        //      final index = i ~/ 2 + 1;
+                              return _buildRow(index);
+                            },
+                          ),
+
+                          /*
+                          ListView(
+                            children: const <Widget>[
+                              ListTile(
+                                title:Text("111",style:TextStyle(fontSize: 20, color: Colors.white),),
+                              ),
+                            ],
+                          ),*/
+                        ),
+                    ),
+
+
+           //     ),
+
                 /*            SizedBox(
                   width: MediaQuery.of(context).size.width,  // or use fixed size like 200
                   height: MediaQuery.of(context).size.height-MediaQuery.of(context).size.height/2,
@@ -643,8 +727,11 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                 ),*/
               ],
+
             )
+
         )
+
     );
   }
 }
@@ -815,39 +902,3 @@ class LatLongElt{ //modal class for Latitude Longitude Element object
   LatLongElt({required this.LatElt, required this.LongElt, required this.dateTimeElt, required this.altElt});
 }
 
-class PowerElt {
-  int identElt;
-  double distElt, timeElt, powerElt, speedElt, paceElt, meanPowerElt, medianPowerElt, medianSpeedElt;
-  double percentMaxElt, vo2ValueElt, vdotValueElt;
-  PowerElt({required this.identElt, required this.distElt, required this.timeElt,
-            required this.powerElt, required this.speedElt, required this.paceElt,
-            required this.meanPowerElt, required this.medianPowerElt, required this.medianSpeedElt,
-            required this.percentMaxElt, required this.vo2ValueElt, required this.vdotValueElt });
-
-}
-
-class RunElt {
-  int identRunElt;
-  DateTime dateTimeRunELt;
-  List<PowerElt> PowerRunElt;
-  double medianPowerRunElt, meanPowerRunElt;
-  double medianSpeedRunElt;
-  double percentMaxRunElt, vo2ValueRunElt, vdotValueRunElt;
-  int numberOfEasyRunElt;
-  int numberOfModerateRunElt;
-  int numberOfThresholdRunElt;
-  int numberOfIntervalRunElt;
-  int numberOfRepetitionRunElt;
-  RunElt({required this.identRunElt,
-          required this.dateTimeRunELt,
-          required this.PowerRunElt,
-          required this.medianPowerRunElt, required this.meanPowerRunElt,
-          required this.medianSpeedRunElt,
-          required this.percentMaxRunElt, required this.vo2ValueRunElt, required this.vdotValueRunElt,
-          required this.numberOfEasyRunElt,
-          required this.numberOfModerateRunElt,
-          required this.numberOfThresholdRunElt,
-          required this.numberOfIntervalRunElt,
-          required this.numberOfRepetitionRunElt
-  });
-}
