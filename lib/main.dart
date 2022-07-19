@@ -2,11 +2,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'dart:math';
 import 'package:simple_speed_dial/simple_speed_dial.dart';
 import 'package:code/RunEltModel.dart';
 import 'package:code/PowerEltModel.dart';
-import 'RunPowerView.dart';
+import 'package:code/RunPowerView.dart';
+import 'package:code/VDOTcalculus.dart';
+import 'package:code/RunCalculus.dart';
+//import 'package:fluttertoast/fluttertoast.dart';
+
 
 
 void main() {
@@ -20,6 +23,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
       theme: ThemeData(
         // This is the theme of your application.
@@ -62,15 +66,18 @@ class _MyHomePageState extends State<MyHomePage> {
   late LocationPermission permission;
   late Position position;
 
-  String long = "", lat = "";
-  double longElt = 0 , latElt = 0;
+  String long = "",
+      lat = "";
+  double longElt = 0,
+      latElt = 0;
   late StreamSubscription<Position> positionStream;
 
   GoogleMapController? mapController; //contrller for Google map
 
-  static  LatLng _kMapCenter = LatLng(0, 0);
+  static LatLng _kMapCenter = LatLng(0, 0);
 
-  static  CameraPosition _kInitialPosition = CameraPosition(target: _kMapCenter, zoom: 11.0, tilt: 0, bearing: 0);
+  static CameraPosition _kInitialPosition = CameraPosition(
+      target: _kMapCenter, zoom: 11.0, tilt: 0, bearing: 0);
 
 
   double mass = 75;
@@ -94,17 +101,18 @@ class _MyHomePageState extends State<MyHomePage> {
   double intervalPaceMax = 0;
   double repetitionPaceMin = 0;
   double repetitionPaceMax = 0;
-  int numberOfEasy = 0;
-  int numberOfModerate = 0;
-  int numberOfThreshold = 0;
-  int numberOfInterval = 0;
-  int numberOfRepetition = 0;
+  double numberOfEasy = 0;
+  double numberOfModerate = 0;
+  double numberOfThreshold = 0;
+  double numberOfInterval = 0;
+  double numberOfRepetition = 0;
 
 
   List<LatLongElt> latLongList = [];
   int numberOfEltInLatLongList = 0;
 
   List<PowerElt> powerEltList = [];
+
   //PowerElt powerElt = PowerElt(identElt: 1, distElt: 1, timeElt: 1, powerElt: 1, speedElt: 1, paceElt: 1, meanPowerElt: 1, medianPowerElt: 1, medianSpeedElt: 1, percentMaxElt: 1, vo2ValueElt: 1, vdotValueElt: 1);
   List<RunElt> runEltList = [];
 
@@ -112,6 +120,7 @@ class _MyHomePageState extends State<MyHomePage> {
   int deltaTimezonePowerActivity = 0;
 
   DateTime dateTime = DateTime.now();
+
   //String second = "" ;
 
   double timeFromStart = 0;
@@ -120,7 +129,8 @@ class _MyHomePageState extends State<MyHomePage> {
   String distanceFromStartString = "";
 
   double power = 0;
-  String powerString ="";
+
+  // String powerString ="";
   double sumOfPower = 0;
   int numberOfPower = 0;
   double meanPower = 0;
@@ -134,31 +144,192 @@ class _MyHomePageState extends State<MyHomePage> {
   double vo2Value = 0;
   double vdotValue = 0;
 
+  double deviationPower = 0;
+
   String stateOfRun = "Go";
   String stateOfRunString = "Pause";
-  bool  IsRunRecorded = false ;
+  bool IsRunRecorded = false;
+
   int identEltRecorded = 0;
 
   String _text = '';
 
-  //List Widget Begin
+  bool _numberInputIsValid = true;
 
-  Widget _buildRow(int idx) {
-    return ListTile(
-      title: Text(runEltList[idx].identRunElt.toString(),style:TextStyle(fontSize: 20, color: Colors.white),),
-      leading: SizedBox(
-        width: 50,
-        height: 50,
-    //    child: Image.network(Fruitdata[index].ImageUrl),
+  Widget _buildInputFieldMass() {
+    return Container(
+      width : 200,
+      child:TextField(
+      keyboardType: TextInputType.number,
+      style: TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        icon: const Icon(Icons.people),
+        labelText: 'Enter your mass :',
+        labelStyle: TextStyle(color: Colors.white),
+        errorText: _numberInputIsValid ? null : 'Please enter your mass!',
+        errorStyle: TextStyle(color: Colors.white),
+        enabledBorder: const OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(10.0)),
+          borderSide: BorderSide(
+               color: Colors.redAccent,
+               width: 3,
+            ) ,
+        ),
       ),
-      onTap: (){
-        Navigator.of(context).push(MaterialPageRoute(builder: (context)=>RunPowerView(runElt: runEltList[idx],)));
+ //     onSubmitted: (val) =>
+   //       Fluttertoast.showToast(msg: 'You entered: ${double.parse(val)}'),
+      onChanged: (String val) {
+        final v = double.tryParse(val);
+        mass = double.parse(val);
+        debugPrint('parsed value = $v');
+        if (v == null) {
+          setState(() => _numberInputIsValid = false);
+        } else {
+          setState(() => _numberInputIsValid = true);
+        }
       },
+    ),
     );
   }
 
+
+  //Widget ListTile Begin
+  Widget _buildRow(index) {
+    return ListTile(
+      title: Text(runEltList[index].dateTimeRunELt.toString(),style:TextStyle(fontSize: 15, color: Colors.white),),
+      leading: SizedBox(
+        width: 50,
+        height: 50,
+        child: Center(
+          child: const Icon(Icons.line_weight, color: Colors.white),
+        ),
+      ),
+      subtitle: Text(runEltList[index].meanPowerRunElt.toStringAsFixed(0)+" W",style:TextStyle(fontSize: 15, color: Colors.redAccent),),
+      onTap: (){
+        Navigator.push(context, MaterialPageRoute(builder: (context)=>RunPowerView(runElt: runEltList[index],)));
+      },
+    );
+  }
+  //Widget  ListTitle End
+
+  //Widget Card ListView Begin
+  Widget _cardListView() {
+    return Expanded(
+      child: Card(
+        color: Color.fromRGBO(50, 50, 50, 1),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(30.0),
+            topRight: Radius.circular(30.0),
+          ),
+        ),
+        child:
+        ListView.builder(
+          itemCount: runEltList.length,
+          padding: const EdgeInsets.all(16.0),
+          itemBuilder: (BuildContext context, int index) {
+            //      if (i.isOdd) return const Divider();
+            //      final index = i ~/ 2 + 1;
+            return _buildRow(index);
+          },
+        ),
+      ),
+    );
+  }
   //List Widget End
 
+
+  //Widget Card ListView End
+
+  //Widget Card Element Begin
+  Widget _cardElementPower(String label, String value, String unity, double topValue, String topUnity,  color) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.start, // Row contents horizontally
+      crossAxisAlignment: CrossAxisAlignment.center, //Center Row contents vertically,
+      children: [
+        const VerticalDivider(
+          width: 15,
+          thickness: 5,
+        ),
+        Column(
+            mainAxisAlignment: MainAxisAlignment.start, // Row contents horizontally
+            children : [
+              Text(label,style:TextStyle(fontSize: 20, color: Colors.white),),
+              Row(
+                  children : [
+                    Text(value,style:TextStyle(fontSize: 20, color: color,fontWeight: FontWeight.bold,)),
+                    Text(unity,style:TextStyle(fontSize: 20, color: color,fontWeight: FontWeight.bold,)),
+                  ]
+              )
+            ]
+        ),
+        const VerticalDivider(
+          width: 50,
+          thickness: 5,
+        ),
+        Text(topValue.toStringAsFixed(0),style:TextStyle(fontSize: 50, color: color,fontWeight: FontWeight.bold,)),
+        Text(topUnity,style:TextStyle(fontSize: 50, color: color,fontWeight: FontWeight.bold,)),
+      ],
+    );
+  }
+  //Widget Card Element End
+
+  //Widget Card RunPower  measurement Begin
+  Widget _cardRunPowerGPS() {
+    return Card(
+      color: Color.fromRGBO(50, 50, 50, 1),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(30.0),
+          topRight: Radius.circular(30.0),
+          bottomLeft: Radius.circular(30.0),
+          bottomRight: Radius.circular(30.0),
+        ),
+      ),
+      //   child: SizedBox(
+      //   height: 400.0,
+      child: Column(
+        children: [
+    /*      Text(servicestatus? "GPS status is Enabled": "GPS status is disabled.",style:TextStyle(fontSize: 15, color: Colors.white),),
+          Text(haspermission? "GPS permission is Enabled": "GPS permission is disabled.",style:TextStyle(fontSize: 15, color: Colors.white),),
+          Text("Longitude: $long", style:TextStyle(fontSize: 20, color: Colors.white),),
+          Text("Latitude: $lat", style:TextStyle(fontSize: 20, color: Colors.white),),
+          const Divider(
+            height: 50,
+            thickness: 5,
+          ),
+     */   _buildInputFieldMass(),
+          const Divider(
+            height: 50,
+            thickness: 5,
+          ),
+          _cardElementPower("Power :", power.toStringAsFixed(0)," W",meanPower, "W",Colors.redAccent),
+          const Divider(
+            height: 50,
+            thickness: 5,
+          ),
+          _cardElementPower("Time :", timeFromStartString,"",medianPower, "W",Colors.yellowAccent),
+          const Divider(
+            height: 50,
+            thickness: 5,
+          ),
+          _cardElementPower("Distance :", distanceFromStartString,"",deviationPower, "%",Colors.lightBlueAccent),
+          const Divider(
+            height: 50,
+            thickness: 5,
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center, //Center Row contents horizontally
+            crossAxisAlignment: CrossAxisAlignment.center, //Center Row contents vertically,
+            children: [
+              Text("$stateOfRunString",style:TextStyle(fontSize: 20, color: Colors.white),),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+  //Widget Card RunPower  measurement End
 
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
@@ -285,7 +456,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
         timeFromStartString = getCalculateTimeFromSecondes(timeFromStart);
 
-
         pressureSaturation = toBuckEquation(temperature);
 
         massVolumic = toTransformMassVolumic(percentHumidity,pressureSaturation,pressureATM,temperature);
@@ -294,11 +464,13 @@ class _MyHomePageState extends State<MyHomePage> {
 
         power = getPower(mass, deltaDistancePowerActivity, deltaTimezonePowerActivity, Ar, massVolumic, speedWind, rateElevation, gravity);
 
-        powerString = power.toStringAsFixed(2);
+      //  powerString = power.toStringAsFixed(0);
 
 
-        if (IsRunRecorded && !power.isNaN) {
-          identEltRecorded = identEltRecorded + 1;
+         if (IsRunRecorded && !power.isNaN) {
+      //    if (!power.isNaN) {
+
+            identEltRecorded = identEltRecorded + 1;
           print("ElemenentOfPower");
           print(identEltRecorded);
           print(distanceFromStartString);
@@ -324,6 +496,8 @@ class _MyHomePageState extends State<MyHomePage> {
           print("evolution of median Power...");
           print(medianPower);
 
+          deviationPower = (((medianPower - meanPower)/meanPower) * 100).abs() ;
+
           sList.add(speed);
           medianSpeed = calculateMedian(sList);
           print("evolution of median Speed... ");
@@ -340,6 +514,9 @@ class _MyHomePageState extends State<MyHomePage> {
           vdotValue = VDOT(vo2Value, percentMax);
           print("evolution of vdot during time from Start");
           print(vdotValue);
+
+     //     print("ici mass from input text");
+       //   print(val);
 
           powerEltList.add(PowerElt(
               identElt: identEltRecorded,
@@ -379,7 +556,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
         backgroundColor: Colors.black,
         appBar: AppBar(
-        //    title: Text("Runpower"),
+            title: Text("RUNPOWER",style:TextStyle(fontSize: 20, color: Colors.white),),
             backgroundColor: Colors.black
         ),
         /*
@@ -456,7 +633,8 @@ class _MyHomePageState extends State<MyHomePage> {
                 distanceFromStartString = "";
 
                 power = 0;
-                powerString ="";
+               // powerString ="";
+                deviationPower = 0;
                 sumOfPower = 0;
                 numberOfPower = 0;
                 meanPower = 0;
@@ -559,9 +737,11 @@ class _MyHomePageState extends State<MyHomePage> {
                 print(numberOfInterval);
                 print(numberOfRepetition);
 
-                RunElt runElt =  RunElt(identRunElt: DateTime.now().hashCode,
+                print("Listeeeze");
+                print(powerEltList.length);
+          /*      RunElt runElt =  RunElt(identRunElt: DateTime.now().hashCode,
                                 dateTimeRunELt: DateTime.now(),
-                                PowerRunElt: powerEltList,
+                                powerRunElt: powerEltList,
                                 medianPowerRunElt: powerEltList[powerEltList.length - 1].medianPowerElt,
                                 meanPowerRunElt: powerEltList[powerEltList.length - 1].meanPowerElt,
                                 medianSpeedRunElt: powerEltList[powerEltList.length - 1].medianSpeedElt,
@@ -573,8 +753,65 @@ class _MyHomePageState extends State<MyHomePage> {
                                 numberOfThresholdRunElt: numberOfThreshold,
                                 numberOfIntervalRunElt: numberOfInterval,
                                 numberOfRepetitionRunElt: numberOfRepetition);
+*/
+                print("mass");
+                print(mass);
+                runEltList.add(
+                    RunElt(identRunElt: DateTime.now().hashCode,
+                        dateTimeRunELt: DateTime.now(),
+                        massRunElt: mass,
+                        powerRunElt: powerEltList,
+                        medianPowerRunElt: powerEltList[powerEltList.length - 1].medianPowerElt,
+                        meanPowerRunElt: powerEltList[powerEltList.length - 1].meanPowerElt,
+                        medianSpeedRunElt: powerEltList[powerEltList.length - 1].medianSpeedElt,
+                        percentMaxRunElt: powerEltList[powerEltList.length - 1].percentMaxElt,
+                        vo2ValueRunElt: powerEltList[powerEltList.length - 1].vo2ValueElt,
+                        vdotValueRunElt: powerEltList[powerEltList.length - 1].vdotValueElt,
+                        numberOfEasyRunElt: numberOfEasy,
+                        numberOfModerateRunElt: numberOfModerate,
+                        numberOfThresholdRunElt: numberOfThreshold,
+                        numberOfIntervalRunElt: numberOfInterval,
+                        numberOfRepetitionRunElt: numberOfRepetition)
+                );
 
-                runEltList.add(runElt);
+                //Tout mettre à zero....
+                latLongList.clear();
+                numberOfEltInLatLongList = 0;
+
+                powerEltList.clear();
+
+                deltaDistancePowerActivity = 0;
+                deltaTimezonePowerActivity = 0;
+
+                dateTime = DateTime.now();
+                //   second = "" ;
+
+
+                timeFromStart = 0;
+                timeFromStartString = "";
+                distanceFromStart = 0;
+                distanceFromStartString = "";
+
+                power = 0;
+                //powerString ="";
+                deviationPower = 0;
+                sumOfPower = 0;
+                numberOfPower = 0;
+                meanPower = 0;
+                mList.clear();
+                sList.clear();
+                medianPower = 0;
+                speed = 0;
+                medianSpeed = 0;
+                pace = 0;
+                percentMax = 0;
+                vo2Value = 0;
+                vdotValue = 0;
+
+                identEltRecorded = 0;
+
+                _text = '';
+
 
                 setState(() {
                   _text = 'Save ! ';
@@ -591,150 +828,16 @@ class _MyHomePageState extends State<MyHomePage> {
         body:
         Center(
             child: Column(
-              children: <Widget>[
-                Card(
-                  color: Color.fromRGBO(50, 50, 50, 1),
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(30.0),
-                      topRight: Radius.circular(30.0),
-                      bottomLeft: Radius.circular(30.0),
-                      bottomRight: Radius.circular(30.0),
-                    ),
-                  ),
-               //   child: SizedBox(
-                 //   height: 400.0,
-                    child: Column(
-                      children: <Widget>[
-                        Text(servicestatus? "GPS status is Enabled": "GPS status is disabled.",style:TextStyle(fontSize: 15, color: Colors.white),),
-                        Text(haspermission? "GPS permission is Enabled": "GPS permission is disabled.",style:TextStyle(fontSize: 15, color: Colors.white),),
-                        Text("Longitude: $long", style:TextStyle(fontSize: 20, color: Colors.white),),
-                        Text("Latitude: $lat", style:TextStyle(fontSize: 20, color: Colors.white),),
-                        const Divider(
-                          height: 50,
-                          thickness: 5,
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center, //Center Row contents horizontally
-                          crossAxisAlignment: CrossAxisAlignment.center, //Center Row contents vertically,
-                          children:   <Widget>[
-                            Text("Power :",style:TextStyle(fontSize: 20, color: Colors.white),),
-                            const VerticalDivider(
-                              width: 50,
-                              thickness: 5,
-                            ),
-                            Text("$powerString",style:TextStyle(fontSize: 20, color: Colors.redAccent,fontWeight: FontWeight.bold,)),
-                          ],
-                        ),
-                        const Divider(
-                          height: 50,
-                          thickness: 5,
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center, //Center Row contents horizontally
-                          crossAxisAlignment: CrossAxisAlignment.center, //Center Row contents vertically,
-                          children:   <Widget>[
-                            Text("Time :",style:TextStyle(fontSize: 20, color: Colors.white),),
-                            const VerticalDivider(
-                              width: 50,
-                              thickness: 5,
-                            ),
-                            Text("$timeFromStartString",style:TextStyle(fontSize: 20, color: Colors.yellowAccent,fontWeight: FontWeight.bold,)),
-                          ],
-                        ),
-                        const Divider(
-                          height: 50,
-                          thickness: 5,
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center, //Center Row contents horizontally
-                          crossAxisAlignment: CrossAxisAlignment.center, //Center Row contents vertically,
-                          children:   <Widget>[
-                            Text("Distance :",style:TextStyle(fontSize: 20, color: Colors.white),),
-                            const VerticalDivider(
-                              width: 50,
-                              thickness: 5,
-                            ),
-                            Text("$distanceFromStartString",style:TextStyle(fontSize: 20, color: Colors.lightBlueAccent,fontWeight: FontWeight.bold,)),
-                            Text(" km",style:TextStyle(fontSize: 20, color: Colors.lightBlueAccent,fontWeight: FontWeight.bold,)),
-                          ],
-                        ),
-                        const Divider(
-                          height: 50,
-                          thickness: 5,
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center, //Center Row contents horizontally
-                          crossAxisAlignment: CrossAxisAlignment.center, //Center Row contents vertically,
-                          children:   <Widget>[
-                            Text("$stateOfRunString",style:TextStyle(fontSize: 20, color: Colors.white),),
-                          ],
-                        ),
-
-                      ],
-                    ),
-                  ),
-                Column(
-
-                  children:  <Widget>[
-                    Text("RunPowerList",style:TextStyle(fontSize: 20, color: Colors.white),),
-
-                  ],
-                ),
-                Expanded(
-                  child:Card(
-                    color: Color.fromRGBO(50, 50, 50, 1),
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(30.0),
-                        topRight: Radius.circular(30.0),
-                      ),
-                    ),
-                          child:
-                          ListView.builder(
-                            itemCount: runEltList.length,
-                            padding: const EdgeInsets.all(16.0),
-                            itemBuilder: (BuildContext context, int index) {
-                        //      if (i.isOdd) return const Divider();
-                        //      final index = i ~/ 2 + 1;
-                              return _buildRow(index);
-                            },
-                          ),
-
-                          /*
-                          ListView(
-                            children: const <Widget>[
-                              ListTile(
-                                title:Text("111",style:TextStyle(fontSize: 20, color: Colors.white),),
-                              ),
-                            ],
-                          ),*/
-                        ),
-                    ),
-
-
-           //     ),
-
-                /*            SizedBox(
-                  width: MediaQuery.of(context).size.width,  // or use fixed size like 200
-                  height: MediaQuery.of(context).size.height-MediaQuery.of(context).size.height/2,
-                  child:
-                    GoogleMap(
-                      myLocationEnabled: true,
-                      initialCameraPosition: _kInitialPosition,
-                      myLocationButtonEnabled: false,
-                      onMapCreated: _onMapCreated,
-                    ),
-                ),*/
+              children:[
+                _cardRunPowerGPS(),
+                _cardListView(),
               ],
-
             )
-
         )
-
     );
   }
 }
+
 
 class MyDrawer extends StatelessWidget {
   const MyDrawer({Key? key}) : super(key: key);
@@ -743,155 +846,6 @@ class MyDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Drawer();
   }
-}
-
-// methods
-// run calculus
-getDistanceFromLatLontoMeter(double lat1, double lon1, double lat2, double lon2) {
-  double earthRadius = 6371;
-  double dLat = degToRad(lat2-lat1);
-  double dLon = degToRad(lon2-lon1);
-  double intResA =  (sin(dLat/2) * sin(dLat/2) +
-      cos(degToRad(lat1)) * cos(degToRad(lat2)) * sin(dLon/2) * sin(dLon/2));
-  double intResB =  (2 * atan2(sqrt(intResA), sqrt(1-intResA)));
-  double dDist = 1000 * (earthRadius * intResB);
-  return dDist;
-}
-
-degToRad(double deg) {
-return (deg * (pi / 180));
-}
-
-getDeltaTimeFromTimezoneString(DateTime timezone1, DateTime timezone2){
-  int timezoneStartPoint = 3600 * (timezone1.hour) + 60 * (timezone1.minute) + timezone1.second;
-  int timezoneEndPoint = 3600 * (timezone2.hour) + 60 * (timezone2.minute) + timezone2.second;
-  return  (timezoneEndPoint - timezoneStartPoint);
-}
-
-getPower(double mass, double deltaDistance, int deltaTime, double Ar, double massVolumic, double speedWind, double rateElevation, double gravity) {
-  return mass * (deltaDistance / deltaTime) +
-      0.5 * Ar * massVolumic * (deltaDistance / deltaTime + speedWind) * (deltaDistance / deltaTime + speedWind)
-      * deltaDistance/deltaTime +
-      mass * gravity * rateElevation * (deltaDistance / deltaTime);
-}
-
-toTransformMassVolumic (double percentHumidity, double pressureSaturation, double pressureATM, double temperature) {
-  double temperatureKelvin = temperature + 273.15;
-  double Rs = 287.058;
-  double Humidity = percentHumidity / 100;
-
-  return (1.0 - (0.3783 * Humidity * pressureSaturation) / pressureATM) * pressureATM / (Rs * temperatureKelvin);
-}
-
-toBuckEquation (double temperature) {
-  double forBuckEquation = (18.878 - (temperature / 234.5)) * (temperature / (257.14 + temperature));
-  return (611.21 * exp(forBuckEquation));
-}
-
-getCalculateTimeFromSecondes(var seconds) {
-  //print("TimeFromSeondes");
-  //print("sec");
-  var sec = seconds % 60;
-  //print(sec);
-  //print("min");
-  var min = seconds % 3600 / 60;
-  //print(min);
-  //print("hours");
-  var hours = seconds % 86400 / 3600;
-  //print(hours);
-  //print("days");
-  var days = seconds / 86400;
-  //print(days.truncate());
-  StringBuffer sbCalculateTime = new StringBuffer();
-  if (days.truncate() != 0) {
-    sbCalculateTime.write(days.truncate());
-    sbCalculateTime.write("days");
-  }
-  if (hours.truncate() != 0) {
-    sbCalculateTime.write(hours.truncate());
-    sbCalculateTime.write("h");
-  }
-  if (min.truncate() != 0) {
-    sbCalculateTime.write(min.truncate());
-    sbCalculateTime.write("m");
-  }
-  if (sec.truncate() != 0) {
-    sbCalculateTime.write(sec.truncate());
-    sbCalculateTime.write("s");
-  }
-  String timeCalculateString = sbCalculateTime.toString();
-  //print("time");
-  //print(timeCalculateString);
-
-  return timeCalculateString;
-}
-
-calculateMedian(List<double> clonedList) {
-  //List<int> mList = List();
-  //timeRecordNotifier.timeRecords.forEach((element) {
-  //  mList.add(element.partialTime);
-  //});
-
-  //clone list
-  //List<int> clonedList = List();
-  //clonedList.addAll(mList);
-
-  //sort list
-  clonedList.sort((a, b) => a.compareTo(b));
-
-  double median;
-
-  int middle = clonedList.length ~/ 2;
-  if (clonedList.length % 2 == 1) {
-    median = clonedList[middle];
-  } else {
-    median = ((clonedList[middle - 1] + clonedList[middle]) / 2.0);
-  }
-
-  return median;
-}
-
-getSpeedFromDistanceAndTime(double distance, int time) {
-  return distance / time;
-}
-
-getPaceFromSpeed(double speed) {
-  return (60.0 / (speed * 3.6));
-}
-
-
-//VDOT calculus
-percentValue(double time)  {
-
-  double percent = 0.8 + 0.1894393 * exp(-0.012778 * time) + 0.2989558 * exp(-0.1932605 * time);
-
-  return percent;
-
-}
-
-VO2 (double speed) {
-
-  double VO2 = -4.6 + 0.182258 * speed + 0.000104 * (speed * speed);
-
-  return VO2;
-
-}
-
-VDOT (double VO2, double percentMax) {
-
-  double VDOT = VO2 / percentMax;
-
-  return VDOT;
-
-}
-
-target (double dist, double percent, double vdot) {
-
-  double target = (dist * 2 * 0.000104) / (-0.182258 +
-                    sqrt(0.182258 * 0.182258 - 4 * 0.000104 * (-4.6 - percent * vdot)));
-
-  return target;
-
 }
 
 
